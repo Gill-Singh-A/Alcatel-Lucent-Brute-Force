@@ -26,7 +26,7 @@ def login(server, username='admin', password='123456', scheme="https", timeout=N
     t1 = time()
     try:
         nonce = requests.get(f"{scheme}://{server}/key==nonce", verify=False, timeout=timeout).text
-        response = requests.post(f"{scheme}://{server}/", verify=False, timeout=timeout, data=f"encoded={quote(username + ':' + md5(username + ':' + password + ':' + nonce).hexdigest())}")
+        response = requests.post(f"{scheme}://{server}/", verify=False, timeout=timeout, headers={"Cookie": f"auth={nonce}"}, data=f"encoded={quote(username + ':' + md5(username.encode() + ':'.encode() + password.encode() + ':'.encode() + nonce.encode()).hexdigest())}")
         authorization_status = False if "XSTR_HLP_AUTH_ERROR" in response.text and response.status_code == 200 else True
         t2 = time()
         return authorization_status, t2-t1
